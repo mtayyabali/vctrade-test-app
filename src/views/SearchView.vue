@@ -1,12 +1,12 @@
 <template>
-  <div class="searchView h-full overflow-hidden">
+  <div class="searchView h-full overflow-hidden" v-if="users && users.length > 0">
     <div class="h-full flex">
 
       <!-- Static sidebar for desktop -->
       <div class="hidden lg:flex lg:flex-shrink-0">
         <div class="flex flex-col w-64">
           <!-- Sidebar component, swap this element with another sidebar if you like -->
-          <Sidebar :users="users"></Sidebar>
+          <Sidebar :users="users" @selectUser="selectUser"></Sidebar>
         </div>
       </div>
       <div class="flex flex-col min-w-0 flex-1 overflow-hidden">
@@ -28,45 +28,29 @@
           </div>
         </div>
 
-        <div class="flex-1 relative z-0 flex overflow-hidden">
-          <main class="flex-1 relative z-0 overflow-y-auto focus:outline-none xl:order-last">
-            <!-- Start main area-->
-            <div class="absolute inset-0 py-6 px-4 sm:px-6 lg:px-8">
-              <div class="h-full border-2 border-gray-200 border-dashed rounded-lg"/>
-            </div>
-            <!-- End main area -->
-          </main>
-          <aside
-              class="hidden relative xl:order-first xl:flex xl:flex-col flex-shrink-0 w-96 border-r border-gray-200 overflow-y-auto">
-            <!-- Start secondary column (hidden on smaller screens) -->
-            <div class="absolute inset-0 py-6 px-4 sm:px-6 lg:px-8">
-              <div class="h-full border-2 border-gray-200 border-dashed rounded-lg"/>
-            </div>
-            <!-- End secondary column -->
-          </aside>
-        </div>
+        <UserDetails :user="selectedUser" v-if="selectedUser.name !== undefined"></UserDetails>
       </div>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import {defineComponent} from 'vue';
+import {computed, defineComponent, Ref} from 'vue';
 import '../styles/searchView.scss';
 import {ref} from 'vue'
-import {Dialog, DialogOverlay, TransitionChild, TransitionRoot} from '@headlessui/vue'
+// import {Dialog, DialogOverlay, TransitionChild, TransitionRoot} from '@headlessui/vue'
 import {
   MenuIcon,
   XIcon,
 } from '@heroicons/vue/outline';
 import Sidebar from "@/components/Sidebar.vue";
-import {api} from '@/modules/api.js';
-
-// import HelloWorld from '@/components/HelloWorld.vue'; // @ is an alias to /src
+import {useStore} from 'vuex';
+import UserDetails from "@/components/UserDetails.vue";
 
 export default defineComponent({
   name: 'SearchView',
   components: {
+    UserDetails,
     Sidebar,
     // Dialog,
     // DialogOverlay,
@@ -79,28 +63,24 @@ export default defineComponent({
     document.body.classList.add('h-full', 'overflow-hidden')
   },
   setup() {
-    const sidebarOpen = ref(false)
-    const users = ref([]);
-    console.log('setup called');
-
-    const getUsers = () => {
-      return new Promise((resolve, reject) => {
-            api.get('https://randomuser.me/api/', {
-              params: {
-                results: '500'
-              }
-            }).then((response: any) => {
-              console.log(response.data);
-              users.value = response.data.results;
-            })
-          }
-      )
+    const store = useStore();
+    const sidebarOpen: Ref = ref(false)
+    let selectedUser = ref({});
+    // Read from state
+    let users: Ref = computed(() => store.state.users);
+    if (users.value.length === 0) {
+      // Fetch from API
+      store.dispatch('getUsers');
     }
-    getUsers();
+    const selectUser = (user)=> {
+      console.log(user);
+      selectedUser.value = user;
+    }
     return {
       users,
       sidebarOpen,
-      getUsers
+      selectedUser,
+      selectUser
     }
   },
 });
