@@ -1,5 +1,5 @@
 <template>
-  <div class="searchView h-full overflow-hidden" v-if="users && users.length > 0">
+  <div class="searchView h-full overflow-hidden">
     <div class="h-full flex">
 
       <!-- Static sidebar for desktop -->
@@ -72,10 +72,11 @@ export default defineComponent({
       // Fetch from API
       store.dispatch('getUsers');
     }
-    const selectUser = (user)=> {
+    const selectUser = (user) => {
       console.log(user);
       selectedUser.value = user;
     }
+
     return {
       users,
       sidebarOpen,

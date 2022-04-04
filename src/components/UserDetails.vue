@@ -108,10 +108,10 @@ export default {
     user: Object
   },
   setup(props, {emit}) {
-    const capitalizeFirstLetter = (str) => {
+    const capitalizeFirstLetter = (str:string) => {
       return str.charAt(0).toUpperCase() + str.slice(1);
     }
-    const getName = (user) => {
+    const getName = (user:User) => {
       return user.name.title + ' ' + capitalizeFirstLetter(user.name.first) + ' ' + capitalizeFirstLetter(user.name.last);
     }
     return {
