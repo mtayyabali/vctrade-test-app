@@ -6,7 +6,7 @@ const routes: Array<RouteRecordRaw> = [
     path: '/',
     name: 'search',
     component: SearchView
-  }
+  },
 ]
 
 const router = createRouter({

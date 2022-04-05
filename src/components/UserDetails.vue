@@ -53,7 +53,9 @@
               </div>
               <div class="sm:col-span-1">
                 <span class="text-sm font-medium text-gray-500">Street:
-                  <span class="mt-1 text-sm text-gray-900">{{ user.location.street.name + ' ' + user.location.street.number }}</span>
+                  <span class="mt-1 text-sm text-gray-900">{{
+                      user.location.street.name + ' ' + user.location.street.number
+                    }}</span>
                 </span>
               </div>
             </div>
@@ -107,13 +109,23 @@ export default {
   props: {
     user: Object
   },
-  setup(props, {emit}) {
-    const capitalizeFirstLetter = (str:string) => {
+  setup() {
+    /**
+     * Helper function to capitalize first letter
+     * @param str
+     */
+    const capitalizeFirstLetter = (str: string): string => {
       return str.charAt(0).toUpperCase() + str.slice(1);
     }
-    const getName = (user:User) => {
+
+    /**
+     * Helper function to capitalize name of the user
+     * @param user
+     */
+    const getName = (user: User): string => {
       return user.name.title + ' ' + capitalizeFirstLetter(user.name.first) + ' ' + capitalizeFirstLetter(user.name.last);
     }
+
     return {
       getName,
     }

@@ -1,3 +1,6 @@
+/**
+ * Interface for type User
+ */
 export interface User {
     cell: string,
     dob: {

@@ -1,7 +1,6 @@
 <template>
   <div class="searchView h-full overflow-hidden">
     <div class="h-full flex">
-
       <!-- Static sidebar for desktop -->
       <div class="hidden lg:flex lg:flex-shrink-0">
         <div class="flex flex-col w-64">
@@ -10,24 +9,6 @@
         </div>
       </div>
       <div class="flex flex-col min-w-0 flex-1 overflow-hidden">
-        <!--        Collapse button-->
-        <div class="lg:hidden">
-          <div class="flex items-center justify-between bg-gray-50 border-b border-gray-200 px-4 py-1.5">
-            <div>
-              <img class="h-8 w-auto" src="https://tailwindui.com/img/logos/workflow-mark-indigo-600.svg"
-                   alt="Workflow"/>
-            </div>
-            <div>
-              <button type="button"
-                      class="-mr-3 h-12 w-12 inline-flex items-center justify-center rounded-md text-gray-500 hover:text-gray-900"
-                      @click="sidebarOpen = true">
-                <span class="sr-only">Open sidebar</span>
-                <MenuIcon class="h-6 w-6" aria-hidden="true"/>
-              </button>
-            </div>
-          </div>
-        </div>
-
         <UserDetails :user="selectedUser" v-if="selectedUser.name !== undefined"></UserDetails>
       </div>
     </div>
@@ -38,24 +19,20 @@
 import {computed, defineComponent, Ref} from 'vue';
 import '../styles/searchView.scss';
 import {ref} from 'vue'
-// import {Dialog, DialogOverlay, TransitionChild, TransitionRoot} from '@headlessui/vue'
 import {
   MenuIcon,
   XIcon,
 } from '@heroicons/vue/outline';
 import Sidebar from "@/components/Sidebar.vue";
-import {useStore} from 'vuex';
+import {Store, useStore} from 'vuex';
 import UserDetails from "@/components/UserDetails.vue";
+import {User} from "@/modules/user";
 
 export default defineComponent({
   name: 'SearchView',
   components: {
     UserDetails,
     Sidebar,
-    // Dialog,
-    // DialogOverlay,
-    // TransitionChild,
-    // TransitionRoot,
     MenuIcon,
     XIcon,
   },
@@ -63,23 +40,35 @@ export default defineComponent({
     document.body.classList.add('h-full', 'overflow-hidden')
   },
   setup() {
-    const store = useStore();
-    const sidebarOpen: Ref = ref(false)
-    let selectedUser = ref({});
+    // Initialize variables
+    const store: Store<any> = useStore(); // For Vuex
+    let selectedUser: Ref = ref({}); // For selected user from the list
+
     // Read from state
     let users: Ref = computed(() => store.state.users);
     if (users.value.length === 0) {
       // Fetch from API
       store.dispatch('getUsers');
     }
-    const selectUser = (user) => {
-      console.log(user);
+
+    /**
+     * Function to set selected user value and store in local storage
+     * @param user
+     */
+    const selectUser: Function = (user: User): void => {
       selectedUser.value = user;
+      localStorage.setItem('selectedUser', JSON.stringify(user));
+    }
+
+    // Read Selected user from storage
+    let userStr: string | null = localStorage.getItem('selectedUser');
+    if (userStr) {
+      let user: User = JSON.parse(userStr);
+      selectUser(user);
     }
 
     return {
       users,
-      sidebarOpen,
       selectedUser,
       selectUser
     }

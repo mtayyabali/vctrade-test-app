@@ -11,11 +11,13 @@
 
       <!-- Gender Filter-->
       <div class="pt-4">
-          <span class="items-center">Gender: </span>
+        <span class="items-center">Gender: </span>
         <div class="space-y-2 sm:flex sm:items-center sm:space-y-0 sm:space-x-2">
           <div v-for="gender in genders" :key="gender.id" class="flex items-center" :class="{'ml-2': gender.id !== 0}">
-            <input :id="gender.id" name="notification-method" type="radio" :checked="gender.id === 0"
-                   class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300" :value="gender.name" v-model="genderFilter" @change="searchName"/>
+            <input :id="gender.id" name="notification-method" type="radio"
+                   :checked="genderFilter.length > 0 ? gender.name === genderFilter: gender.id === 0"
+                   class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300" :value="gender.name"
+                   v-model="genderFilter" @change="searchName"/>
             <label :for="gender.id" class="ml-3 block text-sm font-medium text-gray-700">
               {{ gender.name }}
             </label>
@@ -33,7 +35,7 @@
                   <img class="h-10 w-10 rounded-full" :src="user && user.picture ? user.picture.medium : ''" alt=""/>
                 </div>
                 <div class="flex-1 min-w-0">
-                  <a href="#" class="focus:outline-none">
+                  <a class="focus:outline-none">
                     <!-- Extend touch target to entire panel -->
                     <span class="absolute inset-0" aria-hidden="true"/>
                     <p class="text-sm font-medium text-gray-900">
@@ -47,13 +49,10 @@
               </div>
             </li>
             <li :class="{'hidden' : keyword.length !== 0 || genderFilter !== 'Both' || usersChunk.length === 0}">
-              <a href="#" @click="requestMoreUsers"
-                 class="w-full flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-              >More
-                Results...</a>
+              <a @click="requestMoreUsers"
+                 class="w-full flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">More Results...</a>
             </li>
-            <VueEternalLoading :load="load"
-                               v-if="searchResults.length > 25"></VueEternalLoading>
+            <VueEternalLoading :load="load" v-if="searchResults.length > 25"></VueEternalLoading>
           </ul>
         </div>
       </nav>
@@ -64,6 +63,8 @@
 <script lang="ts">
 import {ref, Ref, watch} from "vue";
 import {VueEternalLoading, LoadAction} from '@ts-pro/vue-eternal-loading';
+import {User} from "@/modules/user";
+import {useRouter, useRoute} from 'vue-router'
 
 
 export default {
@@ -76,8 +77,11 @@ export default {
   },
   emits: ['selectUser'],
   setup(props, {emit}) {
-    // Initialize variables
-    const genders: Ref = ref([
+
+    /**
+     * Initialize variables
+     */
+    const genders: Ref = ref([ // For Radio Buttons
       {
         id: 0,
         name: 'Both'
@@ -91,38 +95,72 @@ export default {
         name: 'female'
       }
     ])
-    const genderFilter:Ref = ref('Both');
-    const usersChunk: Ref = ref([]);
-    const limit: Ref = ref(25);
-    const offset: Ref = ref(0);
-    const keyword: Ref = ref('');
-    const searchResults: Ref = ref([]);
-    const chunks: Ref = ref([]);
+    const genderFilter: Ref = ref(''); // For selected gender filter
+    const usersChunk: Ref = ref([]); // For users chunk
+    const limit: Ref = ref(25); // For limit on list to display
+    const offset: Ref = ref(0); // For offset of users chunk
+    const keyword: Ref = ref(''); // For search keyword input
+    const searchResults: Ref = ref([]); // For search results list
+    const router = useRouter(); // For pushing url parameter to Url
+    const route = useRoute(); // For accessing url parameter from vue router
 
-    // Function to make chunks of Users data
-    const getUsersChunk = (users: Array<any>, limit: number, offset: number) => {
-      chunks.value = [];
-      if (users.length > 0) {
-        for (let i = offset; i < limit && i < users.length; i++) {
-          chunks.value.push(users[i]);
-        }
-      }
-      return chunks.value;
+    /**
+     * Function to push query
+     * @param query
+     */
+    function pushWithQuery(query) {
+      router.push({
+        name: 'search',
+        query: {
+          ...query,
+        },
+      })
     }
 
-    async function load({loaded}: LoadAction): Promise<void> {
-      offset.value = offset.value + 25;
-      limit.value = limit.value + 25;
-      const loadedUsers = getUsersChunk(searchResults.value, limit.value, offset.value);
-      usersChunk.value.push(...loadedUsers);
-      loaded(loadedUsers.length);
+    /**
+     * Function to make chunks of Users data
+     * @param users
+     * @param limit
+     * @param offset
+     */
+    const getUsersChunk = (users: Array<User>, limit: number, offset: number): Array<User> => {
+      let chunks: Array<User> = [];
+      if (users.length > 0) {
+        for (let i: number = offset; i < limit && i < users.length; i++) {
+          chunks.push(users[i]);
+        }
+      }
+      return chunks;
+    }
+
+    /**
+     * Read from storage search results
+     */
+    let oldSearch: string | null = localStorage.getItem('searchResult');
+    if (oldSearch) {
+      searchResults.value = JSON.parse(oldSearch);
+      usersChunk.value = getUsersChunk(searchResults.value, limit.value, offset.value)
     }
 
     // Initialize users chunk data
     usersChunk.value = getUsersChunk(props.users, limit.value, offset.value);
 
-    // Function for event More Results
-    const requestMoreUsers = () => {
+    /**
+     * Function for infinite scroll
+     * @param loaded
+     */
+    async function load({loaded}: LoadAction): Promise<void> {
+      offset.value = offset.value + 25;
+      limit.value = limit.value + 25;
+      const loadedUsers: Array<User> = getUsersChunk(searchResults.value, limit.value, offset.value);
+      usersChunk.value.push(...loadedUsers);
+      loaded(loadedUsers.length);
+    }
+
+    /**
+     * Function for event More Results
+     */
+    const requestMoreUsers = (): void => {
       if (offset.value !== props.users.length) {
         offset.value = offset.value + 25;
         limit.value = limit.value + 25;
@@ -130,69 +168,143 @@ export default {
       }
     }
 
-    // Watchers
-    watch(() => props.users, (newValue, oldValue) => {
-      console.log('old value: ', oldValue)
-      console.log('new Value: ', newValue);
-      usersChunk.value = getUsersChunk(props.users, limit.value, offset.value);
-
-    });
-
-    // Helper function to capitalize name
-    const capitalizeFirstLetter = (str) => {
+    /**
+     * Helper function to capitalize name
+     * @param str
+     */
+    const capitalizeFirstLetter = (str: string): string => {
       return str.charAt(0).toUpperCase() + str.slice(1);
     }
 
-    // Helper function to get Full name with title
-    const getName = (user) => {
-      return user.name.title + ' ' + capitalizeFirstLetter(user.name.first) + ' ' + capitalizeFirstLetter(user.name.last);
+    /**
+     * Helper function to get Full name with title
+     * @param user
+     */
+    const getName = (user: User): string => {
+      return user.name.title + ' ' +
+          capitalizeFirstLetter(user.name.first) + ' ' +
+          capitalizeFirstLetter(user.name.last);
     }
 
-    // Function to emit select user event
-    const selectUser = (user) => {
+    /**
+     * Function to emit select user event
+     * @param user
+     */
+    const selectUser = (user: User): void => {
       emit('selectUser', user);
     }
 
-    // Function to filter users based on keyword and/or gender
-    const searchName = () => {
+    /**
+     * Function to filter users based on keyword and/or gender
+     */
+    const searchName = (): void => {
+      let hasSetUrlParams: boolean = false;
+
       // Reset search condition
       searchResults.value = [];
-      if (keyword.value.length === 0 && genderFilter.value === 'Both') {
+      if (keyword.value.length === 0 && (genderFilter.value === 'Both' || genderFilter.value === '')) {
+        router.push({
+          name: 'search',
+          query: {},
+        })
         usersChunk.value = getUsersChunk(props.users, limit.value, offset.value);
         return;
       }
 
       for (const user of props.users) {
-        let name = user.name.first + user.name.last;
+        // Combine first name and last name for matching
+        let name: string = user.name.first + user.name.last;
+
         // For keyword and gender filter
-        if (keyword.value.length > 0 && genderFilter.value !== 'Both') {
-          // console.log('first condition');
+        if (keyword.value.length > 0 && (genderFilter.value === 'male' || genderFilter.value === 'female')) {
           if ((name.trim().toLowerCase().includes(keyword.value.trim().toLowerCase())) && (user.gender == genderFilter.value)) {
+
+            // For setting search parameters in URL
+            if (!hasSetUrlParams) {
+              let query: Object = {
+                keyword: keyword.value,
+                gender: genderFilter.value
+              }
+              pushWithQuery(query);
+              hasSetUrlParams = true;
+            }
+
+            // Push matching user to search results
             searchResults.value.push(user)
           }
 
           // For Keyword filter
         } else if (keyword.value.length > 0) {
           if (name.trim().toLowerCase().includes(keyword.value.trim().toLowerCase())) {
+
+            // For setting search parameters in URL
+            if (!hasSetUrlParams) {
+              let query = {
+                keyword: keyword.value
+              }
+              pushWithQuery(query);
+              hasSetUrlParams = true;
+            }
+
+            // Push matching user to search results
             searchResults.value.push(user)
           }
 
           // For Gender filter
-        } else if (genderFilter.value !== 'Both') {
+        } else if ((genderFilter.value !== 'Both' || genderFilter.value === '')) {
+
+          // For setting search parameters in URL
           if (genderFilter.value === user.gender) {
+            if (!hasSetUrlParams) {
+              let query = {
+                gender: genderFilter.value
+              }
+              pushWithQuery(query);
+              hasSetUrlParams = true;
+            }
+
+            // Push matching user to search results
             searchResults.value.push(user)
           }
         }
       }
+
+      // Reset limit and offset for chunking results
       limit.value = 25;
       offset.value = 0;
+
+      // If results are found
       if (searchResults.value.length > 0) {
         usersChunk.value = [];
+
+        // Store search result in local storage
+        localStorage.setItem('searchResult', JSON.stringify(searchResults.value));
+
+        // Chunk the search results to show initially
         usersChunk.value = getUsersChunk(searchResults.value, limit.value, offset.value)
-      } else {
+      } else { // No results found!
         usersChunk.value = [];
+        router.push({
+          name: 'search',
+          query: {},
+        })
       }
     }
+
+    // Read from URL Parameters
+    if (route.query.gender) {
+      genderFilter.value = route.query.gender;
+      searchName();
+    }
+    if (route.query.keyword) {
+      keyword.value = route.query.keyword;
+      searchName();
+    }
+
+    // Watchers
+    watch(() => props.users, (newValue, oldValue) => {
+      usersChunk.value = getUsersChunk(props.users, limit.value, offset.value);
+    });
     return {
       capitalizeFirstLetter,
       usersChunk,
@@ -204,12 +316,8 @@ export default {
       load,
       searchResults,
       genders,
-      genderFilter
+      genderFilter,
     }
   }
 }
 </script>
-
-<style scoped>
-
-</style>
