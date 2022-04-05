@@ -1,10 +1,10 @@
 <template>
   <div>
-    <div class="flex-1 relative z-0 flex overflow-hidden">
-      <main class="flex-1 relative z-0 overflow-y-auto focus:outline-none xl:order-last">
+    <div class="overflow-auto">
+      <main class="flex-1 relative z-0 overflow-auto focus:outline-none">
         <!-- User Details-->
-        <div class="border-t border-gray-200 px-4 py-5 sm:px-6">
-          <dl class="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2">
+        <div class="border-t border-gray-200 px-4 py-5 sm:px-6 overflow-auto">
+          <dl class="grid grid-cols-2 gap-y-8 sm:grid-cols-2 ">
 
             <!-- User Picture-->
             <div class="sm:col-span-1">

@@ -28,7 +28,7 @@
       <nav class="h-full overflow-y-auto pt-4" aria-label="Users">
         <div class="relative">
           <ul role="list" class="relative z-0 divide-y divide-gray-200" v-if="users.length > 0">
-            <li v-for="user in usersChunk" class="bg-white" @click="selectUser(user)">
+            <li v-for="user in usersChunk" class="bg-white" :class="{'bg-gray-200': selectedUser === user}" @click="selectUser(user)" style="cursor: pointer">
               <div
                   class="relative px-6 py-5 flex items-center space-x-3 hover:bg-gray-50 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-500">
                 <div class="flex-shrink-0">
@@ -49,7 +49,7 @@
               </div>
             </li>
             <li :class="{'hidden' : keyword.length !== 0 || genderFilter !== 'Both' || usersChunk.length === 0}">
-              <a @click="requestMoreUsers"
+              <a @click="requestMoreUsers" style="cursor: pointer"
                  class="w-full flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">More
                 Results...</a>
             </li>
@@ -107,6 +107,7 @@ export default {
     const router = useRouter(); // For pushing url parameter to Url
     const route = useRoute(); // For accessing url parameter from vue router
     const enableInfiniteScroll: Ref = ref(false) // For enabling infinite-scroll only for search
+    const selectedUser: Ref = ref({});
     /**
      * Function to push query
      * @param query
@@ -195,6 +196,7 @@ export default {
      * @param user
      */
     const selectUser = (user: User): void => {
+      selectedUser.value = user;
       emit('selectUser', user);
     }
 
@@ -323,7 +325,8 @@ export default {
       searchResults,
       genders,
       genderFilter,
-      enableInfiniteScroll
+      enableInfiniteScroll,
+      selectedUser
     }
   }
 }
