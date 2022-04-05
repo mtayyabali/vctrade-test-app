@@ -50,9 +50,12 @@
             </li>
             <li :class="{'hidden' : keyword.length !== 0 || genderFilter !== 'Both' || usersChunk.length === 0}">
               <a @click="requestMoreUsers"
-                 class="w-full flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">More Results...</a>
+                 class="w-full flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">More
+                Results...</a>
             </li>
-            <VueEternalLoading :load="load" v-if="searchResults.length > 25"></VueEternalLoading>
+
+            <!--Infinite Scroll-->
+            <VueEternalLoading :load="load" v-if="enableInfiniteScroll && searchResults.length > 25"></VueEternalLoading>
           </ul>
         </div>
       </nav>
@@ -95,7 +98,7 @@ export default {
         name: 'female'
       }
     ])
-    const genderFilter: Ref = ref(''); // For selected gender filter
+    const genderFilter: Ref = ref('Both'); // For selected gender filter
     const usersChunk: Ref = ref([]); // For users chunk
     const limit: Ref = ref(25); // For limit on list to display
     const offset: Ref = ref(0); // For offset of users chunk
@@ -103,7 +106,7 @@ export default {
     const searchResults: Ref = ref([]); // For search results list
     const router = useRouter(); // For pushing url parameter to Url
     const route = useRoute(); // For accessing url parameter from vue router
-
+    const enableInfiniteScroll: Ref = ref(false) // For enabling infinite-scroll only for search
     /**
      * Function to push query
      * @param query
@@ -139,6 +142,7 @@ export default {
     let oldSearch: string | null = localStorage.getItem('searchResult');
     if (oldSearch) {
       searchResults.value = JSON.parse(oldSearch);
+      enableInfiniteScroll.value = false;
       usersChunk.value = getUsersChunk(searchResults.value, limit.value, offset.value)
     }
 
@@ -199,7 +203,7 @@ export default {
      */
     const searchName = (): void => {
       let hasSetUrlParams: boolean = false;
-
+      enableInfiniteScroll.value = true;
       // Reset search condition
       searchResults.value = [];
       if (keyword.value.length === 0 && (genderFilter.value === 'Both' || genderFilter.value === '')) {
@@ -294,7 +298,9 @@ export default {
     // Read from URL Parameters
     if (route.query.gender) {
       genderFilter.value = route.query.gender;
-      searchName();
+      if (genderFilter.value !== 'Both') {
+        searchName();
+      }
     }
     if (route.query.keyword) {
       keyword.value = route.query.keyword;
@@ -317,6 +323,7 @@ export default {
       searchResults,
       genders,
       genderFilter,
+      enableInfiniteScroll
     }
   }
 }
