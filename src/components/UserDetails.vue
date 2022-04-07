@@ -1,18 +1,18 @@
 <template>
   <div>
-    <div class="overflow-auto">
-      <main class="flex-1 relative z-0 overflow-auto focus:outline-none">
+    <div class="">
+      <main class="h-full focus:outline-none overflow-y-auto">
         <!-- User Details-->
-        <div class="border-t border-gray-200 px-4 py-5 sm:px-6 overflow-auto">
-          <dl class="grid grid-cols-2 gap-y-8 sm:grid-cols-2 ">
-
+        <div class="relative px-4 py-5 sm:px-6 ">
             <!-- User Picture-->
-            <div class="sm:col-span-1">
+            <div class="flex justify-center">
               <img class="h-30 w-30 rounded-full" :src="user ? user.picture.large : ''" alt=""/>
             </div>
+          <dl class="grid grid-cols-2 mt-5 gap-y-8 sm:grid-cols-1 ">
+
 
             <!-- User Basic Info-->
-            <div class="sm:col-span-1">
+            <div class="sm:col-span-2">
               <!-- User Name-->
               <span class="text-sm font-medium text-gray-500">Full Name:
                 <span class="mt-1 text-sm text-gray-900">{{ getName(user) }}</span>
@@ -32,10 +32,10 @@
             </div>
 
             <!-- User's Location-->
-            <div class="sm:col-span-1 pt-1">
+            <div class="sm:col-span-2 pt-1">
               <span class="text-xl font-bold text-gray-500">Location</span>
               <!-- User's Country-->
-              <div class="sm:col-span-1 pt-1">
+              <div class="sm:col-span-2 pt-1">
                 <span class="text-sm font-medium text-gray-500">Country:
                   <span class="mt-1 text-sm text-gray-900">{{ user.location.country }}</span>
                 </span>
@@ -61,7 +61,7 @@
             </div>
 
             <!-- User's Coordinates-->
-            <div class="sm:col-span-1 pt-1">
+            <div class="sm:col-span-2 pt-1">
               <span class="text-m font-medium text-center text-gray-500">Coordinates</span>
               <!-- Longitude-->
               <div class="sm:col-span-1 pt-1">

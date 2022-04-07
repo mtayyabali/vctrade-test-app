@@ -2,7 +2,7 @@
   <div class="searchView h-full overflow-hidden">
     <div class="h-full flex">
       <!-- Static sidebar for desktop -->
-      <div class="hidden lg:flex lg:flex-shrink-0">
+      <div class=" lg:flex lg:flex-shrink-0">
         <div class="flex flex-col w-64">
           <!-- Sidebar component, swap this element with another sidebar if you like -->
           <Sidebar :users="users" @selectUser="selectUser"></Sidebar>
